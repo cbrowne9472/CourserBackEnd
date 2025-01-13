@@ -28,5 +28,9 @@ public class Professor {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "professor")
     @ToString.Exclude // Prevent infinite recursion
     private List<Comment> comments;
+
+    @ManyToMany(mappedBy = "professors")
+    private List<Course> courses;
+
 }
 

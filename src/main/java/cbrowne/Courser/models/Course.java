@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,10 +34,17 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String courseNumber;
 
-    @Transient // This field is not persisted in the database
-    public String getCourse() {
-        return (subject != null ? subject : "") + (courseNumber != null ? courseNumber : "");
-    }
+    @Column(columnDefinition = "TEXT")
+    private String courseName;
+
+
+    @ManyToMany
+    @JoinTable(
+            name = "course_professor",
+            joinColumns = @JoinColumn(name = "course_id"),
+            inverseJoinColumns = @JoinColumn(name = "professor_id")
+    )
+    private List<Professor> professors;
 
     private double rating = 0.0;
 }

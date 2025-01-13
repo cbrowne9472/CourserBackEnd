@@ -1,5 +1,7 @@
 package cbrowne.Courser.service;
 
+import cbrowne.Courser.dto.ProfessorWithCommentsDTO;
+import cbrowne.Courser.models.Comment;
 import cbrowne.Courser.models.Course;
 import cbrowne.Courser.repository.CourseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,38 @@ public class CourseService {
     public CourseService(CourseRepository courseRepository) {
         this.courseRepository = courseRepository;
     }
+
+    public List<ProfessorWithCommentsDTO> getProfessorsForCourse(Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        return course.getProfessors().stream().map(professor -> {
+            List<Comment> comments = professor.getComments().stream()
+                    .filter(comment -> comment.getCourse() != null && comment.getCourse().getId() == courseId) // Ensure course is not null
+                    .toList();
+
+            double avgRating = comments.stream()
+                    .mapToDouble(comment -> {
+                        try {
+                            return Double.parseDouble(comment.getQuality());
+                        } catch (NumberFormatException e) {
+                            return 0.0;
+                        }
+                    })
+                    .average()
+                    .orElse(0.0);
+
+            return new ProfessorWithCommentsDTO(
+                    professor.getName(),
+                    professor.getLink(),
+                    comments, // Pass full Comment objects
+                    avgRating
+            );
+        }).toList();
+    }
+
+
+
 
     public List<Course> getCoursesWithPagination(int start, int limit) {
         Pageable pageable = PageRequest.of(start, limit);
@@ -74,6 +108,7 @@ public class CourseService {
             Course course = new Course();
             course.setTitle(courseData.get("Title"));
             course.setCourseNumber(courseData.get("Course Number"));
+            course.setCourseName(courseData.get("Course Name"));
             course.setSubject(courseData.get("Subject"));
             course.setDescription(courseData.get("Description"));
             course.setAdditionalInfo(courseData.getOrDefault("Additional Info", ""));

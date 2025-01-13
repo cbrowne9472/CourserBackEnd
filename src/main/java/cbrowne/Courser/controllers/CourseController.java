@@ -1,5 +1,6 @@
 package cbrowne.Courser.controllers;
 
+import cbrowne.Courser.dto.ProfessorWithCommentsDTO;
 import cbrowne.Courser.models.Course;
 import cbrowne.Courser.repository.CourseRepository;
 import cbrowne.Courser.service.CourseService;
@@ -27,6 +28,12 @@ public class CourseController {
     public CourseController(CourseRepository courseRepository, CourseService courseService) {
         this.courseRepository = courseRepository;
         this.courseService = courseService;
+    }
+
+    @GetMapping("/courses/{courseId}/professors")
+    public ResponseEntity<List<ProfessorWithCommentsDTO>> getProfessorsForCourse(@PathVariable Long courseId) {
+        List<ProfessorWithCommentsDTO> professors = courseService.getProfessorsForCourse(courseId);
+        return ResponseEntity.ok(professors);
     }
 
     @GetMapping("/courses")

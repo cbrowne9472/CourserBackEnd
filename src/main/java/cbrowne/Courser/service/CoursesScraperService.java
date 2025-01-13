@@ -75,6 +75,7 @@ public class CoursesScraperService {
                     courseData.put("Title", title);
                     courseData.put("Subject", courseSubject);
                     courseData.put("Course Number", courseNum);
+                    courseData.put("Course Name", courseSubject + courseNum);
                 }
 
                 // Extract description

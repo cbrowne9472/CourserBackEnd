@@ -16,8 +16,12 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonProperty("Course") // Maps JSON key "Course" to this field
-    private String course;
+    @ManyToOne
+    @JoinColumn(name = "course_id") // This creates the foreign key in the Comment table
+    private Course course; // Establishes a relationship with Course entity
+
+    @JsonProperty("Course") // Keep this for JSON serialization/deserialization
+    private String courseName;
 
     @JsonProperty("Quality") // Maps JSON key "Quality" to this field
     private String quality;

@@ -21,4 +21,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     Page<Course> findBySubject(String subject, Pageable pageable);
 
+    Optional<Course> findByCourseName(String name);
+
 }
