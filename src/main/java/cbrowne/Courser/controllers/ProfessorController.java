@@ -1,5 +1,7 @@
 package cbrowne.Courser.controllers;
 
+import cbrowne.Courser.dto.CommentDTO;
+import cbrowne.Courser.dto.ProfessorWithCommentsDTO;
 import cbrowne.Courser.models.Comment;
 import cbrowne.Courser.models.Professor;
 import cbrowne.Courser.repository.ProfessorRepository;
@@ -23,11 +25,32 @@ public class ProfessorController {
     }
 
     // Endpoint to get comments for a professor by their ID
-    @GetMapping("/professor/{professorId}")
-    public List<Comment> getCommentsByProfessor(@PathVariable Long professorId) {
+    @GetMapping("/professor/{professorId}/comments")
+    public ProfessorWithCommentsDTO getCommentsByProfessor(@PathVariable Long professorId) {
         Professor professor = professorRepository.findById(professorId)
-                .orElseThrow(() -> new RuntimeException("Professor not found with id: " + professorId));
-        return commentService.getCommentsByProfessor(professor);
+                .orElseThrow(() -> new RuntimeException("Professor not found"));
+
+        List<CommentDTO> comments = professor.getComments().stream()
+                .map(comment -> new CommentDTO(
+                        comment.getCourseName(),
+                        comment.getQuality(),
+                        comment.getDifficulty(),
+                        comment.getDate(),
+                        comment.getAttendance(),
+                        comment.getGrade(),
+                        comment.getTextbook(),
+                        comment.getOnlineClass(),
+                        comment.getComment()
+                ))
+                .toList();
+
+        return new ProfessorWithCommentsDTO(
+                professor.getName(),
+                professor.getLink(),
+                comments
+        );
     }
+
+
 
 }

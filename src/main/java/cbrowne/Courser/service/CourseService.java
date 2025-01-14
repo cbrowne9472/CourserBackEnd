@@ -1,8 +1,11 @@
 package cbrowne.Courser.service;
 
+import cbrowne.Courser.dto.CommentDTO;
 import cbrowne.Courser.dto.ProfessorWithCommentsDTO;
+import cbrowne.Courser.dto.ProfessorWithCoursesDTO;
 import cbrowne.Courser.models.Comment;
 import cbrowne.Courser.models.Course;
+import cbrowne.Courser.models.Professor;
 import cbrowne.Courser.repository.CourseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -23,34 +26,23 @@ public class CourseService {
         this.courseRepository = courseRepository;
     }
 
-    public List<ProfessorWithCommentsDTO> getProfessorsForCourse(Long courseId) {
+    public List<ProfessorWithCoursesDTO> getProfessorsForCourse(Long courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        return course.getProfessors().stream().map(professor -> {
-            List<Comment> comments = professor.getComments().stream()
-                    .filter(comment -> comment.getCourse() != null && comment.getCourse().getId() == courseId) // Ensure course is not null
-                    .toList();
-
-            double avgRating = comments.stream()
-                    .mapToDouble(comment -> {
-                        try {
-                            return Double.parseDouble(comment.getQuality());
-                        } catch (NumberFormatException e) {
-                            return 0.0;
-                        }
-                    })
-                    .average()
-                    .orElse(0.0);
-
-            return new ProfessorWithCommentsDTO(
-                    professor.getName(),
-                    professor.getLink(),
-                    comments, // Pass full Comment objects
-                    avgRating
-            );
-        }).toList();
+        return course.getProfessors().stream()
+                .map(professor -> new ProfessorWithCoursesDTO(
+                        professor.getId(),
+                        professor.getName(),
+                        professor.getLink(),
+                        professor.getCourses().stream()
+                                .map(Course::getCourseName) // Map to course names
+                                .toList()
+                ))
+                .toList();
     }
+
+
 
 
 

@@ -8,14 +8,11 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class ProfessorWithCommentsDTO {
     private String professorName;
     private String professorLink;
-    private List<Comment> comments;
-    private double averageRating;
-
-    // Constructors, getters, and setters
+    private List<CommentDTO> comments;
 }
+
 

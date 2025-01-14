@@ -1,5 +1,6 @@
 package cbrowne.Courser.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -17,8 +18,14 @@ public class Comment {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "course_id") // This creates the foreign key in the Comment table
-    private Course course; // Establishes a relationship with Course entity
+    @JoinColumn(name = "course_id")
+    @JsonBackReference(value = "course-comments") // Back-reference for Course -> Comments
+    private Course course;
+
+    @ManyToOne
+    @JoinColumn(name = "professor_id")
+    @JsonBackReference(value = "professor-comments") // Back-reference for Professor -> Comments
+    private Professor professor;
 
     @JsonProperty("Course") // Keep this for JSON serialization/deserialization
     private String courseName;
@@ -50,9 +57,7 @@ public class Comment {
     @Column(columnDefinition = "TEXT") // Updated to TEXT
     private String comment;
 
-    @ManyToOne
-    @JoinColumn(name = "professor_id")
-    private Professor professor;
+
 }
 
 

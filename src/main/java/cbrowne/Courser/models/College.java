@@ -1,5 +1,6 @@
 package cbrowne.Courser.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +22,8 @@ public class College {
     private String link;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "college")
-    @ToString.Exclude // Prevent infinite recursion
+    @JsonManagedReference(value = "college-professors") // Managed reference for College -> Professors
     private List<Professor> professors;
 }
+
 

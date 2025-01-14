@@ -42,7 +42,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("/home/update/**").hasRole("ADMIN")
                                 .requestMatchers("/home/get/**").permitAll()
                                 .requestMatchers("/auth/get/user").hasRole("ADMIN")
-                                .requestMatchers("/home/**", "/auth/register/**", "/auth/authenticate", "/json/**","/prof_api").permitAll()
+                                .requestMatchers("/home/**", "/auth/register/**", "/auth/authenticate", "/json/**","/prof_api/**").permitAll()
                                 .anyRequest().authenticated()
 //                                .anyRequest().permitAll()
                 )

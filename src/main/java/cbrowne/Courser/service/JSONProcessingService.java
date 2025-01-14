@@ -40,7 +40,6 @@ public class JSONProcessingService {
         Map<String, Object> jsonMap = objectMapper.readValue(file, Map.class);
         LevenshteinDistance distanceCalculator = new LevenshteinDistance();
 
-
         for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
             String collegeName = entry.getKey();
             Map<String, Object> collegeData = (Map<String, Object>) entry.getValue();
@@ -50,11 +49,9 @@ public class JSONProcessingService {
 
             if (college.getProfessors() != null) {
                 for (Professor professor : college.getProfessors()) {
-                    professor.setCollege(college); //Associate Professor with College
+                    professor.setCollege(college); // Associate Professor with College
 
                     if (professor.getComments() != null) {
-
-                        // Dont touch this
                         for (Comment comment : professor.getComments()) {
                             comment.setProfessor(professor); // Associate Comment with Professor
                         }
@@ -64,6 +61,7 @@ public class JSONProcessingService {
 
                             // Fetch all courses and normalize their names
                             List<Course> courses = courseRepository.findAll();
+
                             Course bestMatch = null;
                             int bestDistance = Integer.MAX_VALUE;
 
@@ -81,6 +79,15 @@ public class JSONProcessingService {
                             // Match threshold (adjust as needed)
                             if (bestDistance <= 3) { // Allow up to 3 character differences
                                 comment.setCourse(bestMatch);
+
+                                // Establish relationship between professor and course
+                                if (!professor.getCourses().contains(bestMatch)) {
+                                    professor.getCourses().add(bestMatch);
+                                }
+                                if (!bestMatch.getProfessors().contains(professor)) {
+                                    bestMatch.getProfessors().add(professor);
+                                }
+
                                 return false; // Keep the comment
                             }
 
@@ -95,6 +102,7 @@ public class JSONProcessingService {
             collegeRepository.save(college);
         }
     }
+
 
     private String normalizeCourseName(String courseName) {
         return courseName != null ? courseName.trim().toUpperCase() : null; // Convert to uppercase

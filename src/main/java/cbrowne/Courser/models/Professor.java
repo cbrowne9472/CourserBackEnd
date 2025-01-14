@@ -1,11 +1,15 @@
 package cbrowne.Courser.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -22,15 +26,14 @@ public class Professor {
 
     @ManyToOne
     @JoinColumn(name = "college_id")
-    @ToString.Exclude // Prevent infinite recursion
+    @JsonBackReference(value = "college-professors") // Back-reference for College -> Professors
     private College college;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "professor")
-    @ToString.Exclude // Prevent infinite recursion
-    private List<Comment> comments;
+    @JsonManagedReference(value = "professor-comments") // Managed reference for Professor -> Comments
+    private List<Comment> comments = new ArrayList<>();
 
     @ManyToMany(mappedBy = "professors")
-    private List<Course> courses;
-
+    @JsonIgnore // Prevent serialization of this relationship
+    private List<Course> courses = new ArrayList<>();
 }
-

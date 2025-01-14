@@ -1,20 +1,21 @@
 package cbrowne.Courser.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table
-// Specify table name explicitly if needed
 public class Course {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -37,14 +38,14 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String courseName;
 
-
     @ManyToMany
     @JoinTable(
             name = "course_professor",
             joinColumns = @JoinColumn(name = "course_id"),
             inverseJoinColumns = @JoinColumn(name = "professor_id")
     )
-    private List<Professor> professors;
+    @JsonIgnore // Prevent serialization of this relationship
+    private List<Professor> professors = new ArrayList<>();
 
     private double rating = 0.0;
 }
