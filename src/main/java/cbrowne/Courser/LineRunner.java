@@ -31,8 +31,8 @@ public class LineRunner implements CommandLineRunner {
 //        courseService.courseAdd(new Course("PHYS 160: University Physics I.", 4.0, physDesc));
 //        courseService.courseAdd(new Course("CHEM 313: Organic Chemistry I.", 3.8, chemDesc));
 
-        List<Map<String, String>> courses = courseScraperService.scrapeAllCourses();
-
-        courseService.saveToDatabase(courses);
+//        List<Map<String, String>> courses = courseScraperService.scrapeAllCourses();
+//
+//        courseService.saveToDatabase(courses);
     }
 }

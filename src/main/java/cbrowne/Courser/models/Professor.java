@@ -22,7 +22,20 @@ public class Professor {
     private Long id;
 
     private String name;
+
     private String link;
+
+    @Column(columnDefinition = "TEXT")
+    private String details;
+
+    private Double avgRating;
+
+    private Double avgDifficulty;
+
+    private Integer numRatings;
+
+    private String department;
+
 
     @ManyToOne
     @JoinColumn(name = "college_id")

@@ -6,6 +6,7 @@ import cbrowne.Courser.models.Comment;
 import cbrowne.Courser.models.Professor;
 import cbrowne.Courser.repository.ProfessorRepository;
 import cbrowne.Courser.service.CommentService;
+import cbrowne.Courser.service.ProfDetailsJSONProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,10 +19,13 @@ public class ProfessorController {
     private final CommentService commentService;
     private final ProfessorRepository professorRepository;
 
+    private final ProfDetailsJSONProcessor profDetailsJSONProcessor;
+
     @Autowired
-    public ProfessorController(CommentService commentService, ProfessorRepository professorRepository) {
+    public ProfessorController(CommentService commentService, ProfessorRepository professorRepository, ProfDetailsJSONProcessor profDetailsJSONProcessor) {
         this.commentService = commentService;
         this.professorRepository = professorRepository;
+        this.profDetailsJSONProcessor = profDetailsJSONProcessor;
     }
 
     // Endpoint to get comments for a professor by their ID
@@ -49,6 +53,11 @@ public class ProfessorController {
                 professor.getLink(),
                 comments
         );
+    }
+
+    @PostMapping("/professor_details/import")
+    public void loadProfessorData() {
+        profDetailsJSONProcessor.processAndStoreProfessorData("src/main/resources/combined_colleges_professors.json");
     }
 
 

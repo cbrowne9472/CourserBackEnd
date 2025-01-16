@@ -35,6 +35,10 @@ public class CourseService {
                         professor.getId(),
                         professor.getName(),
                         professor.getLink(),
+                        professor.getDetails(),
+                        professor.getAvgRating(),
+                        professor.getAvgDifficulty(),
+                        professor.getDepartment(),
                         professor.getCourses().stream()
                                 .map(Course::getCourseName) // Map to course names
                                 .toList()
