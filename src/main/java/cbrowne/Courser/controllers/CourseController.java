@@ -1,8 +1,10 @@
 package cbrowne.Courser.controllers;
 
+import cbrowne.Courser.dto.CourseRatingDTO;
+import cbrowne.Courser.dto.ProfessorAverageGradeDTO;
 import cbrowne.Courser.dto.ProfessorWithCommentsDTO;
 import cbrowne.Courser.dto.ProfessorWithCoursesDTO;
-import cbrowne.Courser.models.Course;
+import cbrowne.Courser.models.*;
 import cbrowne.Courser.repository.CourseRepository;
 import cbrowne.Courser.service.CourseService;
 import cbrowne.Courser.webtoken.JwtService;
@@ -16,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin
 @RestController
@@ -30,6 +33,22 @@ public class CourseController {
         this.courseRepository = courseRepository;
         this.courseService = courseService;
     }
+
+    @GetMapping("/course/{courseId}/average-grade")
+    public String getAverageGrade(@PathVariable Long courseId) {
+        return courseService.getAverageGradeForCourse(courseId);
+    }
+
+    @GetMapping("/course/{courseId}/professor-grades")
+    public List<ProfessorAverageGradeDTO> getAverageGradesByProfessor(@PathVariable Long courseId) {
+        return courseService.getAverageGradesByProfessorForCourse(courseId);
+    }
+
+    @GetMapping("/course/{courseId}/avg_rating")
+    public CourseRatingDTO getAverageRatingFromCourse(@PathVariable Long courseId) {
+        return courseService.getAvgRatingFromCommentsFromCourse(courseId);
+    }
+
 
     @GetMapping("/course/{courseId}/professors")
     public List<ProfessorWithCoursesDTO> getProfessorsForCourse(@PathVariable Long courseId) {

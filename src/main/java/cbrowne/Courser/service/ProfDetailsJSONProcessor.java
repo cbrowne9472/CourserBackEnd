@@ -63,7 +63,6 @@ public class ProfDetailsJSONProcessor {
 
                         // Update professor data
                         professor.setName(professorName);
-                        professor.setDetails(details);
                         professor.setAvgRating(avgRating);
                         professor.setAvgDifficulty(avgDifficulty);
                         professor.setNumRatings(numRatings);

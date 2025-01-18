@@ -10,9 +10,6 @@ public class CommentDTO {
     private String quality;
     private String difficulty;
     private String date;
-    private String attendance;
     private String grade;
-    private String textbook;
-    private String onlineClass;
     private String comment;
 }

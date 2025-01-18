@@ -11,7 +11,7 @@ public class ProfessorWithCoursesDTO {
     private Long id;                 // Unique ID for the professor
     private String name;             // Professor's name
     private String link;             // Link to RateMyProfessors profile
-    private String details;          // Details about the professor (e.g., title, department)
+//    private String details;          // Details about the professor (e.g., title, department)
     private Double avgRating;        // Average rating from RateMyProfessors
     private Double avgDifficulty;    // Average difficulty rating
 //    private Integer wouldTakeAgain;  // Percentage of students who would take this professor again

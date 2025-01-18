@@ -3,7 +3,10 @@ package cbrowne.Courser.controllers;
 import cbrowne.Courser.dto.CommentDTO;
 import cbrowne.Courser.dto.ProfessorWithCommentsDTO;
 import cbrowne.Courser.models.Comment;
+import cbrowne.Courser.models.Course;
 import cbrowne.Courser.models.Professor;
+import cbrowne.Courser.repository.CommentRepository;
+import cbrowne.Courser.repository.CourseRepository;
 import cbrowne.Courser.repository.ProfessorRepository;
 import cbrowne.Courser.service.CommentService;
 import cbrowne.Courser.service.ProfDetailsJSONProcessor;
@@ -19,12 +22,16 @@ public class ProfessorController {
     private final CommentService commentService;
     private final ProfessorRepository professorRepository;
 
+    private final CourseRepository courseRepository;
+    private final CommentRepository commentRepository;
+
     private final ProfDetailsJSONProcessor profDetailsJSONProcessor;
 
-    @Autowired
-    public ProfessorController(CommentService commentService, ProfessorRepository professorRepository, ProfDetailsJSONProcessor profDetailsJSONProcessor) {
+    public ProfessorController(CommentService commentService, ProfessorRepository professorRepository, CourseRepository courseRepository, CommentRepository commentRepository, ProfDetailsJSONProcessor profDetailsJSONProcessor) {
         this.commentService = commentService;
         this.professorRepository = professorRepository;
+        this.courseRepository = courseRepository;
+        this.commentRepository = commentRepository;
         this.profDetailsJSONProcessor = profDetailsJSONProcessor;
     }
 
@@ -40,10 +47,7 @@ public class ProfessorController {
                         comment.getQuality(),
                         comment.getDifficulty(),
                         comment.getDate(),
-                        comment.getAttendance(),
                         comment.getGrade(),
-                        comment.getTextbook(),
-                        comment.getOnlineClass(),
                         comment.getComment()
                 ))
                 .toList();
@@ -55,10 +59,35 @@ public class ProfessorController {
         );
     }
 
-    @PostMapping("/professor_details/import")
-    public void loadProfessorData() {
-        profDetailsJSONProcessor.processAndStoreProfessorData("src/main/resources/combined_colleges_professors.json");
+    @GetMapping("/comments")
+    public ProfessorWithCommentsDTO getCommentsByCourseAndProfessor(
+            @RequestParam Long courseId,
+            @RequestParam Long professorId
+    ) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        Professor professor = professorRepository.findById(professorId)
+                .orElseThrow(() -> new RuntimeException("Professor not found"));
+
+        // Fetch comments for the given course and professor
+        List<CommentDTO> comments = commentRepository.findByCourseAndProfessor(course, professor)
+                .stream()
+                .map(comment -> new CommentDTO(
+                        comment.getCourse().getCourseName(), // Assuming Course has getName()
+                        comment.getQuality(),
+                        comment.getDifficulty(),
+                        comment.getDate(),
+                        comment.getGrade(),
+                        comment.getComment()
+                ))
+                .toList();
+
+        // Return the DTO containing the professor's name and comments
+        return new ProfessorWithCommentsDTO(professor.getName(), null, comments);
     }
+
+
 
 
 

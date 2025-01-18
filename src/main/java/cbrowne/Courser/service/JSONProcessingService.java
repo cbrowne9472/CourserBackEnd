@@ -1,12 +1,11 @@
 package cbrowne.Courser.service;
 
-import cbrowne.Courser.models.College;
 import cbrowne.Courser.models.Comment;
 import cbrowne.Courser.models.Course;
 import cbrowne.Courser.models.Professor;
-import cbrowne.Courser.repository.CollegeRepository;
 import cbrowne.Courser.repository.CommentRepository;
 import cbrowne.Courser.repository.CourseRepository;
+import cbrowne.Courser.repository.ProfessorRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,93 +19,162 @@ import java.util.Map;
 @Service
 public class JSONProcessingService {
 
-    private final CollegeRepository collegeRepository;
-    private final ObjectMapper objectMapper;
-    private final CommentRepository commentRepository;
-
+    private final ProfessorRepository professorRepository;
     private final CourseRepository courseRepository;
+    private final CommentRepository commentRepository;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public JSONProcessingService(CollegeRepository collegeRepository, ObjectMapper objectMapper, CommentRepository commentRepository, CourseRepository courseRepository) {
-        this.collegeRepository = collegeRepository;
-        this.objectMapper = objectMapper;
-        this.commentRepository = commentRepository;
+    public JSONProcessingService(ProfessorRepository professorRepository, CourseRepository courseRepository,
+                                 CommentRepository commentRepository, ObjectMapper objectMapper) {
+        this.professorRepository = professorRepository;
         this.courseRepository = courseRepository;
+        this.commentRepository = commentRepository;
+        this.objectMapper = objectMapper;
     }
 
     public void processAndSaveJSON(String filePath) throws IOException {
-        // Read the JSON file as a Map
+        System.out.println("Starting JSON processing...");
+
         File file = new File(filePath);
-        Map<String, Object> jsonMap = objectMapper.readValue(file, Map.class);
-        LevenshteinDistance distanceCalculator = new LevenshteinDistance();
+        List<Map<String, Object>> jsonList = objectMapper.readValue(file, List.class);
 
-        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
-            String collegeName = entry.getKey();
-            Map<String, Object> collegeData = (Map<String, Object>) entry.getValue();
+        // Preload all courses from the database
+        List<Course> existingCourses = courseRepository.findAll();
 
-            College college = objectMapper.convertValue(collegeData, College.class);
-            college.setName(collegeName);
+        int professorCount = 0; // Counter for processed professors
 
-            if (college.getProfessors() != null) {
-                for (Professor professor : college.getProfessors()) {
-                    professor.setCollege(college); // Associate Professor with College
+        for (Map<String, Object> professorNode : jsonList) {
+            Map<String, Object> professorData = (Map<String, Object>) professorNode.get("node");
 
-                    if (professor.getComments() != null) {
-                        for (Comment comment : professor.getComments()) {
-                            comment.setProfessor(professor); // Associate Comment with Professor
+            // Create and populate Professor entity
+            Professor professor = new Professor();
+            professor.setName((String) professorData.get("firstName") + " " + (String) professorData.get("lastName"));
+            professor.setDepartment((String) professorData.get("department"));
+
+            // Handle avgDifficulty
+            Object avgDifficultyObj = professorData.get("avgDifficulty");
+            if (avgDifficultyObj instanceof Double) {
+                professor.setAvgDifficulty((Double) avgDifficultyObj);
+            } else if (avgDifficultyObj instanceof Integer) {
+                professor.setAvgDifficulty(((Integer) avgDifficultyObj).doubleValue());
+            }
+
+            // Handle avgRating
+            Object avgRatingObj = professorData.get("avgRating");
+            if (avgRatingObj instanceof Double) {
+                professor.setAvgRating((Double) avgRatingObj);
+            } else if (avgRatingObj instanceof Integer) {
+                professor.setAvgRating(((Integer) avgRatingObj).doubleValue());
+            }
+
+            // Handle numRatings
+            Object numRatingsObj = professorData.get("numRatings");
+            if (numRatingsObj instanceof Integer) {
+                professor.setNumRatings((Integer) numRatingsObj);
+            } else if (numRatingsObj instanceof String) {
+                professor.setNumRatings(Integer.parseInt((String) numRatingsObj));
+            }
+
+            Object profileLinkObj = professorNode.get("profileLink");
+            if (profileLinkObj != null && profileLinkObj instanceof String) {
+                professor.setLink((String) profileLinkObj);
+            } else {
+                System.out.println("Profile link missing or invalid for professor: " + professor.getName());
+            }
+
+
+            // Save the professor to make it persistent
+            professor = professorRepository.save(professor);
+
+            // Process associated comments/ratings
+            Map<String, Object> ratings = (Map<String, Object>) professorData.get("ratings");
+            int commentCount = 0; // Counter for processed comments
+
+            if (ratings != null) {
+                List<Map<String, Object>> ratingEdges = (List<Map<String, Object>>) ratings.get("edges");
+
+                for (Map<String, Object> ratingEdge : ratingEdges) {
+//                    if (commentCount >= 100) {
+//                        break; // Stop processing comments after 100
+//                    }
+
+                    Map<String, Object> ratingNode = (Map<String, Object>) ratingEdge.get("node");
+
+                    String courseName = (String) ratingNode.get("class");
+                    Course matchedCourse = findCourseByName(existingCourses, courseName);
+
+                    if (matchedCourse != null) {
+                        // Establish relationship between professor and course
+                        if (!professor.getCourses().contains(matchedCourse)) {
+                            professor.getCourses().add(matchedCourse);
+                        }
+                        if (!matchedCourse.getProfessors().contains(professor)) {
+                            matchedCourse.getProfessors().add(professor);
                         }
 
-                        professor.getComments().removeIf(comment -> {
-                            String normalizedCommentCourse = normalizeCourseName(comment.getCourseName());
+                        Comment comment = new Comment();
+                        comment.setProfessor(professor);
+                        comment.setCourse(matchedCourse);
+                        comment.setCourseName(courseName);
+                        comment.setComment((String) ratingNode.get("comment"));
 
-                            // Fetch all courses and normalize their names
-                            List<Course> courses = courseRepository.findAll();
+                        // Handle difficulty
+                        Object difficultyObj = ratingNode.get("difficultyRating");
+                        if (difficultyObj instanceof Integer) {
+                            comment.setDifficulty(String.valueOf(difficultyObj));
+                        } else if (difficultyObj instanceof String) {
+                            comment.setDifficulty((String) difficultyObj);
+                        }
 
-                            Course bestMatch = null;
-                            int bestDistance = Integer.MAX_VALUE;
+                        // Handle clarity/quality
+                        Object qualityObj = ratingNode.get("clarityRating");
+                        if (qualityObj instanceof Integer) {
+                            comment.setQuality(String.valueOf(qualityObj));
+                        } else if (qualityObj instanceof String) {
+                            comment.setQuality((String) qualityObj);
+                        }
 
-                            for (Course course : courses) {
-                                // Normalize database course name
-                                String normalizedDbCourseName = normalizeCourseName(course.getCourseName());
-                                int distance = distanceCalculator.apply(normalizedCommentCourse, normalizedDbCourseName);
+                        comment.setGrade((String) ratingNode.get("grade"));
+                        comment.setDate(extractDate((String) ratingNode.get("date")));
 
-                                if (distance < bestDistance) {
-                                    bestDistance = distance;
-                                    bestMatch = course;
-                                }
-                            }
 
-                            // Match threshold (adjust as needed)
-                            if (bestDistance <= 3) { // Allow up to 3 character differences
-                                comment.setCourse(bestMatch);
+                        // Save the comment
+                        commentRepository.save(comment);
 
-                                // Establish relationship between professor and course
-                                if (!professor.getCourses().contains(bestMatch)) {
-                                    professor.getCourses().add(bestMatch);
-                                }
-                                if (!bestMatch.getProfessors().contains(professor)) {
-                                    bestMatch.getProfessors().add(professor);
-                                }
-
-                                return false; // Keep the comment
-                            }
-
-                            System.out.println("Skipping comment: Course not found - " + comment.getCourseName());
-                            return true; // Remove the comment
-                        });
+                        commentCount++; // Increment comment counter
                     }
                 }
             }
 
-            // Save the College entity (cascading to Professors and Comments)
-            collegeRepository.save(college);
+            professorCount++; // Increment the professor counter
+            System.out.println("Processed professor: " + professor.getName() + " with " + commentCount + " comments. Professor: " + professorCount);
         }
+
+        System.out.println("Finished processing JSON file. Total professors processed: " + professorCount);
     }
 
 
+    private Course findCourseByName(List<Course> courses, String courseName) {
+        String normalizedCourseName = normalizeCourseName(courseName);
+        for (Course course : courses) {
+            if (normalizeCourseName(course.getCourseName()).equals(normalizedCourseName)) {
+                return course;
+            }
+        }
+        return null; // Return null if no matching course is found
+    }
+
     private String normalizeCourseName(String courseName) {
-        return courseName != null ? courseName.trim().toUpperCase() : null; // Convert to uppercase
+        return courseName != null ? courseName.trim().toUpperCase() : null;
+    }
+    private String extractDate(String dateTime) {
+        if (dateTime != null && dateTime.contains(" ")) {
+            return dateTime.split(" ")[0]; // Extracts only the date part
+        }
+        return dateTime; // Fallback if the format is unexpected
     }
 
 
 }
+

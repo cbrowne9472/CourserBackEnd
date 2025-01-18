@@ -25,9 +25,6 @@ public class Professor {
 
     private String link;
 
-    @Column(columnDefinition = "TEXT")
-    private String details;
-
     private Double avgRating;
 
     private Double avgDifficulty;
@@ -35,12 +32,6 @@ public class Professor {
     private Integer numRatings;
 
     private String department;
-
-
-    @ManyToOne
-    @JoinColumn(name = "college_id")
-    @JsonBackReference(value = "college-professors") // Back-reference for College -> Professors
-    private College college;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "professor")
     @JsonManagedReference(value = "professor-comments") // Managed reference for Professor -> Comments
