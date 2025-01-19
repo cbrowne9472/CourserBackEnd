@@ -20,7 +20,7 @@ public class CollegeController {
 
     @PostMapping("/process-json")
     public String processJsonFile() {
-        String filePath = "src/main/resources/professors_reviews.json";
+        String filePath = "src/main/resources/detailed_professors.json";
 
         try {
             jsonProcessingService.processAndSaveJSON(filePath);
