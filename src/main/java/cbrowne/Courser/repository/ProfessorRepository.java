@@ -15,5 +15,11 @@ public interface ProfessorRepository extends JpaRepository<Professor, Long> {
     @Query("SELECT p FROM Professor p WHERE p.name = :name")
     List<Professor> findByName(@Param("name") String name);
 
+    @Query("SELECT p FROM Professor p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<Professor> searchProfessorsByName(@Param("query") String query);
+
+
+    List<Professor> findByNameContainingIgnoreCase(String name);
+
 }
 

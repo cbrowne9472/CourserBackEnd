@@ -6,6 +6,7 @@ import cbrowne.Courser.dto.ProfessorWithCommentsDTO;
 import cbrowne.Courser.dto.ProfessorWithCoursesDTO;
 import cbrowne.Courser.models.*;
 import cbrowne.Courser.repository.CourseRepository;
+import cbrowne.Courser.repository.ProfessorRepository;
 import cbrowne.Courser.service.CourseService;
 import cbrowne.Courser.webtoken.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +29,25 @@ public class CourseController {
     private final CourseRepository courseRepository;
     private final CourseService courseService;
 
+    private final ProfessorRepository professorRepository;
+
     @Autowired
-    public CourseController(CourseRepository courseRepository, CourseService courseService) {
+    public CourseController(CourseRepository courseRepository, CourseService courseService, ProfessorRepository professorRepository) {
         this.courseRepository = courseRepository;
         this.courseService = courseService;
+        this.professorRepository = professorRepository;
     }
+
+    @GetMapping("/search")
+    public Map<String, List<?>> search(@RequestParam("query") String query) {
+        // Ensure the query is passed exactly as provided without trimming
+        List<Course> courses = courseRepository.searchCoursesByTitle(query);
+        List<Professor> professors = professorRepository.searchProfessorsByName(query);
+
+        return Map.of("courses", courses, "professors", professors);
+    }
+
+
 
     @GetMapping("/course/{courseId}/average-grade")
     public String getAverageGrade(@PathVariable Long courseId) {
@@ -63,24 +78,52 @@ public class CourseController {
             @RequestParam(value = "start", required = false, defaultValue = "0") int start,
             @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(value = "sortBy", required = false, defaultValue = "courseNumber") String sortBy,
-            @RequestParam(value = "order", required = false, defaultValue = "asc") String order) {
+            @RequestParam(value = "order", required = false, defaultValue = "asc") String order,
+            @RequestParam(value = "level", required = false, defaultValue = "") String level) {
         Pageable pageable = PageRequest.of(
                 start / limit,
                 limit,
                 order.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending()
         );
 
-        // Search by title
-        if (!searchQuery.isEmpty()) {
-            return courseRepository.findByTitleContainingIgnoreCase(searchQuery, pageable).getContent();
+        if (!level.isEmpty() && !subject.isEmpty() && !searchQuery.isEmpty()) {
+            return courseRepository.findByCourseNumberStartingWithAndSubjectAndTitleContainingIgnoreCase(
+                    level.substring(0, 1), subject, searchQuery, pageable
+            ).getContent();
         }
 
-        // Filter by subject
+        if (!level.isEmpty() && !subject.isEmpty()) {
+            return courseRepository.findByCourseNumberStartingWithAndSubject(
+                    level.substring(0, 1), subject, pageable
+            ).getContent();
+        }
+
+        if (!level.isEmpty() && !searchQuery.isEmpty()) {
+            return courseRepository.findByCourseNumberStartingWithAndTitleContainingIgnoreCase(
+                    level.substring(0, 1), searchQuery, pageable
+            ).getContent();
+        }
+
+        if (!subject.isEmpty() && !searchQuery.isEmpty()) {
+            return courseRepository.findBySubjectAndTitleContainingIgnoreCase(
+                    subject, searchQuery, pageable
+            ).getContent();
+        }
+
+        if (!level.isEmpty()) {
+            return courseRepository.findByCourseNumberStartingWith(
+                    level.substring(0, 1), pageable
+            ).getContent();
+        }
+
         if (!subject.isEmpty()) {
             return courseRepository.findBySubject(subject, pageable).getContent();
         }
 
-        // Default: return all courses
+        if (!searchQuery.isEmpty()) {
+            return courseRepository.findByTitleContainingIgnoreCase(searchQuery, pageable).getContent();
+        }
+
         return courseRepository.findAll(pageable).getContent();
     }
 
