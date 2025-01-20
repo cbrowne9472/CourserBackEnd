@@ -3,6 +3,7 @@ package cbrowne.Courser.webtoken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class JwtService {
 
-    private static final String SECRET = "14AE92F51D2F852FCBC196D4E01385A28A2192CC646F23E9B3CF9204A7C4ABF7EDAFC58FF30E0766071E9D2D808CDB58B0D8D73E8909721208D98C12072AE8AE";
+    @Value("${jwt.secret}")
+    private String SECRET;
     private static final long VALIDITY = TimeUnit.MINUTES.toMillis(30);
 
     public String generateToken(UserDetails userDetails) {
