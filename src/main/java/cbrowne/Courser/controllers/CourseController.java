@@ -38,6 +38,11 @@ public class CourseController {
         this.professorRepository = professorRepository;
     }
 
+    @GetMapping
+    public String hello(){
+        return "Hello World";
+    }
+
     @GetMapping("/search")
     public Map<String, List<?>> search(@RequestParam("query") String query) {
         // Ensure the query is passed exactly as provided without trimming
